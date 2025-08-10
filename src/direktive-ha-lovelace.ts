@@ -67,33 +67,14 @@ export class DirektiveComponent extends LitElement {
     return hasConfigOrEntityChanged(this, changedProps, false);
   }
 
-  private _showWarning(warning: string): TemplateResult {
-    return html`
-      <hui-warning>${warning}</hui-warning>
-    `;
-  }
-
-  private _showError(error: string): TemplateResult {
-    const errorCard = document.createElement('hui-error-card');
-    errorCard.setConfig({
-      type: 'error',
-      error,
-      origConfig: this.config,
-    });
-
-    return html`
-      ${errorCard}
-    `;
-  }
-
-  private _getStatus(): { total: number; success: number; warning: number } {
+  private _getStatus(): { total: number; success: number; error: number } {
     return this.directives.reduce(
       (counts, directive) => {
         counts[directive.status]++;
         counts.total++;
         return counts;
       },
-      { total: 0, success: 0, warning: 0 }
+      { total: 0, success: 0, error: 0 }
     );
   }
 
@@ -194,14 +175,6 @@ export class DirektiveComponent extends LitElement {
   }
 
   protected render(): TemplateResult | void {
-    if (this.config.show_warning) {
-      return this._showWarning('warning message');
-    }
-
-    if (this.config.show_error) {
-      return this._showError('error message');
-    }
-
     this._updateDirectivesFromSensor();
     
     const status = this._getStatus();
@@ -213,7 +186,7 @@ export class DirektiveComponent extends LitElement {
       >
         <div class='direktive-ha-lovelace'>
           <div class="status-icon">
-            ${status.warning > 0 
+            ${status.error > 0 
               ? html`<ha-icon icon="mdi:alert-circle" class="status-warning"></ha-icon>` 
               : html`<ha-icon icon="mdi:alpha-d-circle"></ha-icon>`
             }
@@ -223,9 +196,9 @@ export class DirektiveComponent extends LitElement {
               You have a total of ${status.total} directives
             </div>
             <div class="status-text-subtitle">
-              ${status.warning > 0 
-                ? html`<i>You have <span>${status.warning}</span> warnings</i>`
-                : html`<i>You have no warnings</i>`
+              ${status.error > 0 
+                ? html`<i>You have <span>${status.error}</span> errors</i>`
+                : html`<i>You have no errors</i>`
               }
             </div>
           </div>

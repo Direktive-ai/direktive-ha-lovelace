@@ -59,32 +59,8 @@ export class DirektiveDialog extends LitElement {
     }
   }
 
-  private _propagateVisionSync() {
-    if (this.hass) {
-      this.hass.callService('mqtt', 'publish', {
-        topic: 'direktive-vision-ha-addon/fetch_vision_entities',
-        payload: '{}',
-        qos: 0,
-        retain: false,
-      })
-      .then(() => {
-        console.log('MQTT message published to trigger entity sync.');
-        // Optionally show some feedback to the user, e.g., a toast notification
-        // this.hass.notification('Sync command sent!'); 
-      })
-      .catch(err => {
-        console.error('Error publishing MQTT message:', err);
-        // Optionally show error feedback
-        // this.hass.notification('Error sending sync command.', 'error');
-      });
-    } else {
-      console.error('Home Assistant object (hass) is not available.');
-    }
-  }
-
   private async _createDirective(): Promise<void> {
     if (!this.newDirectiveMessage.trim()) {
-      this._showNotification("Please enter a directive message", "warning");
       return;
     }
 
@@ -101,17 +77,10 @@ export class DirektiveDialog extends LitElement {
 
   private async _deleteDirective(directiveId: string): Promise<void> {
     try {
-      const response = await this.hass.callWS<DirectiveResponse>({
+      await this.hass.callWS<DirectiveResponse>({
         type: "direktive/delete_directive",
         directive_id: directiveId,
       });
-
-      console.log("--- DELETE DIRECTIVE RESPONSE", response);
-      
-      if (response.success) {
-        this._showNotification("Directive deleted successfully", "success");
-        // this._propagateVisionSync();
-      }
     } catch (err) {
       console.error("Error deleting directive:", err);
       this._showNotification("Error deleting directive", "error");
@@ -120,16 +89,10 @@ export class DirektiveDialog extends LitElement {
 
   private async _downloadDirective(directiveId: string): Promise<void> {
     try {
-      const response = await this.hass.callWS<DirectiveResponse>({
+      await this.hass.callWS<DirectiveResponse>({
         type: "direktive/download_directive",
         directive_id: directiveId
       });
-      
-      if (response.success) {
-        this.directives = response.directives;
-        this._showNotification("Directive downloaded successfully", "success");
-        // this._propagateVisionSync();
-      }
     } catch (err) {
       console.error("Error downloading directive:", err);
       this._showNotification("Error downloading directive", "error");
@@ -217,9 +180,7 @@ export class DirektiveDialog extends LitElement {
         width: 100%;
         --spacing: 12px;
       }
-      .content {
-        min-width: 500px;
-      }
+      .content {}
       .directive-list {
         margin-bottom: 20px;
         max-height: 400px;
@@ -543,8 +504,6 @@ export class DirektiveDialog extends LitElement {
     const userDirectives = this.directives.filter(d => d.discovery === false);
     const discoveredDirectives = this.directives.filter(d => d.discovery === true && d.active === false);
     const _selectedDirective = this.directives.find(d => d.id === this.selectedDirective);
-
-    console.log("--- DIRECTIVE", _selectedDirective?.messages);
 
     return html`
       <ha-dialog
